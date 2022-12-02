@@ -2,11 +2,11 @@
 
 ## Introduction
 
-Cisco SD-WAN, previously known as Viptela, is a software-defined networking solution in Cisco’s portfolio. Just like with many other SD-WAN solutions, the objective of this solution is to delivery routing policies, threat protection, improved application experience all in a simplified environment. 
+Cisco SD-WAN, previously known as Viptela, is a software-defined networking solution by Cisco. Just like with many other SD-WAN solutions, this solution delivers routing policies, threat protection and improved application experience.
 
-Traditionally, setting up and maintaining a secure and reliable WAN was a complex challenge. Organizations wanting to connect (branch) offices and datacenters had to set up an MPLS connection or some other form of dedicated connection. This type of operation does not suit the modern world. With many organizations moving towards the cloud and utilizing SaaS/PaaS services a new challenge is awaiting networking teams.
+Setting up and maintaining a secure and reliable WAN was and still is a complex challenge. Organizations wanting to connect (branch) offices and datacenters had to set up MPLS connections or some other form of dedicated connection. This type of operation does not quite suit the modern the workplace. With many organizations moving towards the cloud and utilizing SaaS/PaaS services a new challenge is awaiting networking teams. This is where SD-WAN comes into play. Allowing organizations to reduce administrative and cost overhead, whilst standardizing their deployment in a unified manner. 
 
-Let's look at the components:
+Let's look at the components that make up the Cisco SD-WAN solution:
 
 ![](https://github.com/infobozk/Cisco-Azure-SDWAN/blob/269a61e8cd73323f7f534d00733c6575c055e47f/images/SDWAN_Components.png)
 
@@ -38,7 +38,7 @@ This guideline will cover the vWAN deployment.
 
 We will be deploying a straightforward design. In this environment we have:
 
-- Secured vWAN Hub in the West-Europe Region.
+- Secured vWAN Hub in the West Europe Region.
 - Virtual Network Spoke.
 - On-premises datacenter already in place with vEdge devices operating.
 
@@ -46,7 +46,7 @@ We will be deploying a straightforward design. In this environment we have:
 
 During the deployment of the vEdge 8000v, we need to provide UUID's as part of the configuration. To make sure we won't be running into this issue, please make sure you follow these steps if you haven't already done so. If templates have already been configured and assigned to the vEdge devices, skip this step.
 
-Open the Cisco Softwre Central Environemt and navigate to the Plug and Play Connect page.
+Open the Cisco Softwre Central Environment and navigate to the Plug and Play Connect page.
 Select 'Add Software Device' as illustrated.
 
 ![](https://github.com/infobozk/Cisco-Azure-SDWAN/blob/123f0609f07f9bd09df067a39742f33d93eacbb4/images/SDWAN_Software%20Central.png)
@@ -102,21 +102,21 @@ Start the wizard to deploy the vEdge into our Azure vWAN Hub.
 
 Once the deployment is complete, you should be able to login to the devices through the vManage SSH terminal. This deployment will associate a public IP to your vEdge devices. Make sure to modify your security settings to protect management connections.
 
-At this point there still is no connectivity between our on-premises environment and the spoke virtual network. SD-WAN operates with intent based routing. Through the vManage portal, we can discover virtual networks inside of our Azure environment and using tags group them together.
+At this point there still is no connectivity between our on-premises environment and the spoke virtual network. SD-WAN operates with intent-based routing. Through the vManage portal, we can discover virtual networks inside of our Azure environment and use tags to group them together.
 
 First, we assign a tag to our virtual network through vManage. Now we can tell our SD-WAN that we want tagged virtual networks to communicate with our on-premises environment. In this demo, this is VPN111 which is the one running on the on-premises devices. SD-WAN connects all locations together with VPN-tunnels. This is once again outside of the scope of this guide, but important to know that this is how we connect our virtual networks to our other locations using SD-WAN.
 
 Enabling this intent will do two things: 
 
-- the vEdge in Azure will start advertizing routes for VPN111
-- the vEdge in Azure it will start learning and advertizing routes to VPN111 learned from the vWAN Hub Router
+- the vEdge in Azure will start advertising routes for VPN111.
+- the vEdge in Azure it will start learning and advertising routes to VPN111 learned from the vWAN Hub Router.
 
 ![](https://github.com/infobozk/Cisco-Azure-SDWAN/blob/a9c25f4c45525a95cae22ad43534baaaa5667315/images/SDWAN_vNetConnectivity.png)
 
 Check the on-premises routing table entries and we now see a route to our virtual network in Azure.
 ![](https://github.com/infobozk/Cisco-Azure-SDWAN/blob/0fd58f00481047f652ca006f9368bb8869df6b2d/images/SDWAN_RouteTableOnPrem.png)
 
-## Notes
+## Traffic Flow
 
 - We now have connectivity between our Azure Virtual network and on-premises datacenter.
 - Looking at the routing table in the 'Effective VM Routes' on the VM NIC, we see that the next-hop is our vEdge in the vWAN Hub.
@@ -124,4 +124,4 @@ Check the on-premises routing table entries and we now see a route to our virtua
 
 We can achieve this by setting an UDR on a Routing Table in the vWAN Hub and associating this Routing Table to the virtual network. Alternatively, the same thing can also be achieved by using the routing intent inside the Azure Firewall Policies. Both methods perform the same: overriding the default BGP-injected route. 
 
-Please note that the 'Default Routing Table' should not have any type of custom route. When a route gets introduced into this routing table, the vWAN Hub Router will advertise it to the vEdge appliances. As a result, the vEdge appliance will advertise these routes to the other vEdge devices. Resulting in unwanted routing entries, such as default routes all pointing towards the Azure Firewall. Use custom routing tables instead.
+Please note that adding custom routes into the 'Default Routing Table' might lead to unwanted propagations. When a route gets introduced into this routing table, the vWAN Hub Router will advertise it to the vEdge appliances. As a result, the vEdge appliance will advertise these routes to the other vEdge devices. Resulting in a default route across the SD-WAN deployment pointing towards the Azure Firewall. Use custom routing tables instead or make modifications to your BGP-filtering on the SD-WAN.
